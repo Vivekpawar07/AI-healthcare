@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Patients — HealthTrack{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h2 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>All Patients</h2>
+  <a href="{{ url_for('add_patient') }}" class="btn btn-primary">
+    <i class="bi bi-person-plus-fill me-1"></i>Add Patient
+  </a>
+</div>
+
+<form method="get" class="mb-4">
+  <div class="input-group search-bar">
+    <span class="input-group-text bg-white border-end-0">
+      <i class="bi bi-search text-muted"></i>
+    </span>
+    <input
+      type="text"
+      name="search"
+      class="form-control border-start-0"
+      placeholder="Search by name or email…"
+      value="{{ search }}"
+      autocomplete="off"
+    >
+    {% if search %}
+      <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+    <button class="btn btn-primary" type="submit">Search</button>
+  </div>
+</form>
+
+{% if patients %}
+  <div class="row g-3">
+    {% for p in patients %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card patient-card h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <h5 class="card-title fw-semibold mb-0">{{ p.full_name }}</h5>
+              <small class="text-muted">{{ p.email }}</small>
+            </div>
+            <span class="badge bg-secondary">Age {{ p.age }}</span>
+          </div>
+
+          <div class="row g-2 mt-2 mb-3">
+            {% set g_label, g_color = p.glucose_status %}
+            {% set h_label, h_color = p.haemoglobin_status %}
+            {% set c_label, c_color = p.cholesterol_status %}
+            <div class="col-4 text-center">
+              <div class="metric-box border rounded p-2">
+                <div class="small text-muted">Glucose</div>
+                <div class="fw-bold">{{ p.glucose }}</div>
+                <span class="badge bg-{{ g_color }} small">{{ g_label }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="metric-box border rounded p-2">
+                <div class="small text-muted">Haemoglobin</div>
+                <div class="fw-bold">{{ p.haemoglobin }}</div>
+                <span class="badge bg-{{ h_color }} small">{{ h_label }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="metric-box border rounded p-2">
+                <div class="small text-muted">Cholesterol</div>
+                <div class="fw-bold">{{ p.cholesterol }}</div>
+                <span class="badge bg-{{ c_color }} small">{{ c_label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('view_patient', id=p.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
+              <i class="bi bi-eye me-1"></i>View
+            </a>
+            <a href="{{ url_for('edit_patient', id=p.id) }}" class="btn btn-sm btn-outline-secondary flex-fill">
+              <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+            <form method="post" action="{{ url_for('delete_patient', id=p.id) }}" class="d-inline" onsubmit="return confirmDelete('{{ p.full_name }}')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="text-muted mt-3 small">{{ patients|length }} patient{{ 's' if patients|length != 1 }} found</p>
+
+{% else %}
+  <div class="empty-state text-center py-5">
+    <i class="bi bi-person-x display-3 text-muted"></i>
+    <h5 class="mt-3 text-muted">
+      {% if search %}No patients match "{{ search }}"{% else %}No patients yet{% endif %}
+    </h5>
+    {% if not search %}
+      <a href="{{ url_for('add_patient') }}" class="btn btn-primary mt-2">
+        <i class="bi bi-person-plus-fill me-1"></i>Add First Patient
+      </a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(name) {
+  return confirm(`Delete patient "${name}"? This cannot be undone.`);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,127 @@
+:root {
+  --primary: #0d6efd;
+  --bg: #f4f6f9;
+}
+
+body {
+  background-color: var(--bg);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Navbar */
+.navbar {
+  background: linear-gradient(135deg, #0a58ca 0%, #0d6efd 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+
+/* Cards */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.08);
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  border-bottom: none;
+  padding: .85rem 1.25rem;
+}
+
+.patient-card {
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.patient-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.1);
+}
+
+/* Metric boxes on cards */
+.metric-box {
+  background: #f8f9fa;
+  font-size: .8rem;
+}
+
+.metric-box .badge {
+  font-size: .65rem;
+}
+
+/* Metric detail boxes on view page */
+.metric-detail-box {
+  background: #fff;
+  transition: box-shadow .15s;
+}
+
+.metric-detail-box:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+/* Search bar */
+.search-bar .form-control:focus {
+  box-shadow: none;
+  border-color: var(--primary);
+}
+
+.search-bar .input-group-text {
+  border-radius: 8px 0 0 8px;
+}
+
+/* Forms */
+.form-control, .form-select {
+  border-radius: 8px;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+}
+
+/* Buttons */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 10px;
+  border: none;
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid #e8eaf0;
+  background: #fff;
+}
+
+/* Empty state */
+.empty-state {
+  background: #fff;
+  border-radius: 16px;
+  padding: 3rem;
+}
+
+/* Table */
+.table td {
+  padding: .55rem .5rem;
+  vertical-align: middle;
+}
+
+/* Donut charts */
+.donut-card {
+  background: #fff;
+  transition: box-shadow .2s, transform .2s;
+}
+
+.donut-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.1);
+}
+
+.donut-center {
+  pointer-events: none;
+  line-height: 1.2;
+}
+
+.x-small {
+  font-size: .7rem;
+}

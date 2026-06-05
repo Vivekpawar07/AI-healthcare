@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ patient.full_name }} — HealthTrack{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-secondary text-white d-flex align-items-center justify-content-between">
+        <h4 class="mb-0"><i class="bi bi-pencil-fill me-2"></i>Edit Patient</h4>
+        <a href="{{ url_for('view_patient', id=patient.id) }}" class="btn btn-sm btn-light">
+          <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+      </div>
+      <div class="card-body p-4">
+        {% set f = form if form else {} %}
+        <form method="post" novalidate>
+
+          <h6 class="text-muted text-uppercase small fw-bold mb-3">Personal Information</h6>
+
+          <div class="mb-3">
+            <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              id="full_name"
+              name="full_name"
+              value="{{ f.get('full_name', patient.full_name) }}"
+              required
+            >
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="date_of_birth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+              <input
+                type="date"
+                class="form-control"
+                id="date_of_birth"
+                name="date_of_birth"
+                value="{{ f.get('date_of_birth', patient.date_of_birth.strftime('%Y-%m-%d')) }}"
+                required
+              >
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                value="{{ f.get('email', patient.email) }}"
+                required
+              >
+            </div>
+          </div>
+
+          <hr>
+          <h6 class="text-muted text-uppercase small fw-bold mb-3">Blood Test Results</h6>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="glucose" class="form-label">
+                Glucose <span class="text-danger">*</span>
+                <small class="text-muted">(mg/dL)</small>
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                class="form-control"
+                id="glucose"
+                name="glucose"
+                value="{{ f.get('glucose', patient.glucose) }}"
+                required
+              >
+              <div class="form-text">Normal fasting: 70–100</div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="haemoglobin" class="form-label">
+                Haemoglobin <span class="text-danger">*</span>
+                <small class="text-muted">(g/dL)</small>
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                class="form-control"
+                id="haemoglobin"
+                name="haemoglobin"
+                value="{{ f.get('haemoglobin', patient.haemoglobin) }}"
+                required
+              >
+              <div class="form-text">Normal: 12–17.5</div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="cholesterol" class="form-label">
+                Cholesterol <span class="text-danger">*</span>
+                <small class="text-muted">(mg/dL)</small>
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                class="form-control"
+                id="cholesterol"
+                name="cholesterol"
+                value="{{ f.get('cholesterol', patient.cholesterol) }}"
+                required
+              >
+              <div class="form-text">Desirable: &lt;200</div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-2">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check-lg me-1"></i>Update Patient
+            </button>
+            <a href="{{ url_for('view_patient', id=patient.id) }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('date_of_birth').max = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}
