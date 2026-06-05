@@ -5,8 +5,6 @@
 {% set g_label, g_color = patient.glucose_status %}
 {% set h_label, h_color = patient.haemoglobin_status %}
 {% set c_label, c_color = patient.cholesterol_status %}
-
-{# border is green only when in the normal/safe zone, red otherwise #}
 {% set g_border = 'success' if g_color == 'success' else 'danger' %}
 {% set h_border = 'success' if h_color == 'success' else 'danger' %}
 {% set c_border = 'success' if c_color == 'success' else 'danger' %}
@@ -83,7 +81,6 @@
       <div class="card-body d-flex flex-column justify-content-between">
         <div class="row g-3 justify-content-center">
 
-          <!-- Glucose -->
           <div class="col-sm-4 text-center">
             <div class="donut-card border border-3 border-{{ g_border }} rounded-4 p-3">
               <div class="donut-wrap position-relative mx-auto" style="width:130px;height:130px;">
@@ -98,7 +95,6 @@
             </div>
           </div>
 
-          <!-- Haemoglobin -->
           <div class="col-sm-4 text-center">
             <div class="donut-card border border-3 border-{{ h_border }} rounded-4 p-3">
               <div class="donut-wrap position-relative mx-auto" style="width:130px;height:130px;">
@@ -113,7 +109,6 @@
             </div>
           </div>
 
-          <!-- Cholesterol -->
           <div class="col-sm-4 text-center">
             <div class="donut-card border border-3 border-{{ c_border }} rounded-4 p-3">
               <div class="donut-wrap position-relative mx-auto" style="width:130px;height:130px;">
@@ -139,7 +134,7 @@
     </div>
   </div>
 
-  <!-- Remarks -->
+  <!-- Rule-based remarks -->
   {% if patient.remarks %}
   <div class="col-12">
     <div class="card">
@@ -153,34 +148,101 @@
   </div>
   {% endif %}
 
-</div>
+  <!-- ── AI Health Assistant ── -->
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold">
+          <i class="bi bi-robot me-2 text-primary"></i>AI Health Assistant
+          <span class="badge bg-primary ms-1" style="font-size:.65rem">Powered by Gemini</span>
+        </span>
+        <button class="btn btn-sm btn-primary" id="generateReportBtn">
+          <i class="bi bi-file-medical me-1"></i>Generate Full Report
+        </button>
+      </div>
+
+      <div class="card-body p-0">
+
+        <!-- AI Report panel (hidden until generated) -->
+        <div id="reportPanel" class="d-none border-bottom p-3 bg-light">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-file-earmark-medical-fill text-primary"></i>
+            <strong>AI-Generated Health Report</strong>
+            <button class="btn btn-sm btn-outline-secondary ms-auto" id="closeReport">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div id="reportContent" class="report-body small lh-lg"></div>
+          <div id="reportSpinner" class="text-center py-3 d-none">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <span class="ms-2 text-muted small">Generating report…</span>
+          </div>
+        </div>
+
+        <!-- Chat messages -->
+        <div id="chatMessages" class="chat-area p-3">
+          <div class="chat-bubble assistant">
+            <i class="bi bi-robot me-1"></i>
+            Hello! I'm your AI health assistant. I have access to
+            <strong>{{ patient.full_name }}'s</strong> blood test results
+            (Glucose: {{ patient.glucose }} mg/dL, Haemoglobin: {{ patient.haemoglobin }} g/dL,
+            Cholesterol: {{ patient.cholesterol }} mg/dL). Ask me anything about these values.
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div class="border-top p-3">
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              id="chatInput"
+              placeholder="Ask about the health results…"
+              autocomplete="off"
+            >
+            <button class="btn btn-primary" id="sendBtn">
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted">AI responses are informational only — consult a physician for medical advice.</small>
+            <button class="btn btn-sm btn-link text-muted p-0" id="clearChatBtn">Clear chat</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- /row -->
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-function confirmDelete() {
-  return confirm('Delete this patient record? This cannot be undone.');
-}
-
-const COLOR = {
-  success: '#198754',
-  warning: '#fd7e14',
-  danger:  '#dc3545',
-  track:   '#e9ecef'
+/* ── Patient data (passed from server) ── */
+const PATIENT = {
+  name:        {{ patient.full_name | tojson }},
+  age:         {{ patient.age }},
+  glucose:     {{ patient.glucose }},
+  haemoglobin: {{ patient.haemoglobin }},
+  cholesterol: {{ patient.cholesterol }}
 };
+const PATIENT_ID = {{ patient.id }};
+const API_BASE = 'http://127.0.0.1:8000';
+
+/* ── Donut charts ── */
+const COLORS = { success: '#198754', warning: '#fd7e14', danger: '#dc3545', track: '#e9ecef' };
 
 function buildDonut(id, value, maxVal, colorKey) {
   const capped = Math.min(value, maxVal);
-  const ctx = document.getElementById(id).getContext('2d');
-  new Chart(ctx, {
+  new Chart(document.getElementById(id).getContext('2d'), {
     type: 'doughnut',
     data: {
       datasets: [{
         data: [capped, maxVal - capped],
-        backgroundColor: [COLOR[colorKey], COLOR.track],
-        borderWidth: 0,
-        borderRadius: 4
+        backgroundColor: [COLORS[colorKey], COLORS.track],
+        borderWidth: 0, borderRadius: 4
       }]
     },
     options: {
@@ -192,13 +254,184 @@ function buildDonut(id, value, maxVal, colorKey) {
   });
 }
 
-// Glucose: display max 300 mg/dL
-buildDonut('chartGlucose', {{ patient.glucose }}, 300, '{{ g_color }}');
-
-// Haemoglobin: display max 25 g/dL
-buildDonut('chartHaemoglobin', {{ patient.haemoglobin }}, 25, '{{ h_color }}');
-
-// Cholesterol: display max 350 mg/dL
+buildDonut('chartGlucose',     {{ patient.glucose }},     300, '{{ g_color }}');
+buildDonut('chartHaemoglobin', {{ patient.haemoglobin }}, 25,  '{{ h_color }}');
 buildDonut('chartCholesterol', {{ patient.cholesterol }}, 350, '{{ c_color }}');
+
+/* ── Misc ── */
+function confirmDelete() {
+  return confirm('Delete this patient record? This cannot be undone.');
+}
+
+/* ── Streaming SSE helper ── */
+async function streamSSE(url, body, onChunk, onDone, onError) {
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch (e) {
+    onError('Cannot reach the AI service. Make sure it is running on port 8000.');
+    return;
+  }
+
+  if (!response.ok) {
+    onError(`API error: ${response.status}`);
+    return;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const raw = line.slice(6).trim();
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.error) { onError(msg.error); return; }
+        if (msg.done)  { onDone(); return; }
+        if (msg.text)  { onChunk(msg.text); }
+      } catch {}
+    }
+  }
+  onDone();
+}
+
+/* ── Report generation ── */
+const reportPanel  = document.getElementById('reportPanel');
+const reportContent = document.getElementById('reportContent');
+const reportSpinner = document.getElementById('reportSpinner');
+
+document.getElementById('generateReportBtn').addEventListener('click', () => {
+  reportPanel.classList.remove('d-none');
+  reportContent.innerHTML = '';
+  reportSpinner.classList.remove('d-none');
+
+  let md = '';
+  streamSSE(
+    `${API_BASE}/api/report`,
+    { patient: PATIENT },
+    chunk => {
+      md += chunk;
+      reportContent.innerHTML = markdownToHtml(md);
+    },
+    () => { reportSpinner.classList.add('d-none'); },
+    err => {
+      reportSpinner.classList.add('d-none');
+      reportContent.innerHTML = `<span class="text-danger">${err}</span>`;
+    }
+  );
+});
+
+document.getElementById('closeReport').addEventListener('click', () => {
+  reportPanel.classList.add('d-none');
+});
+
+/* ── Chat ── */
+const chatMessages = document.getElementById('chatMessages');
+const chatInput    = document.getElementById('chatInput');
+const sendBtn      = document.getElementById('sendBtn');
+const STORAGE_KEY  = `ht_chat_${PATIENT_ID}`;
+
+// Conversation history (user+assistant turns) for API context
+let history = [];
+
+function appendBubble(role, html, streaming = false) {
+  const div = document.createElement('div');
+  div.className = `chat-bubble ${role}`;
+  if (role === 'assistant') div.innerHTML = '<i class="bi bi-robot me-1"></i>';
+  div.innerHTML += html;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return div;
+}
+
+function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  chatInput.value = '';
+  chatInput.disabled = true;
+  sendBtn.disabled  = true;
+
+  appendBubble('user', escapeHtml(text));
+  const bubble = appendBubble('assistant', '<span class="typing-dots">Thinking…</span>');
+
+  let replyText = '';
+
+  streamSSE(
+    `${API_BASE}/api/chat`,
+    { patient: PATIENT, history, message: text },
+    chunk => {
+      replyText += chunk;
+      bubble.innerHTML = '<i class="bi bi-robot me-1"></i>' + markdownToHtml(replyText);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    },
+    () => {
+      history.push({ role: 'user', content: text });
+      history.push({ role: 'assistant', content: replyText });
+      saveHistory();
+      chatInput.disabled = false;
+      sendBtn.disabled   = false;
+      chatInput.focus();
+    },
+    err => {
+      bubble.innerHTML = `<i class="bi bi-robot me-1"></i><span class="text-danger">${err}</span>`;
+      chatInput.disabled = false;
+      sendBtn.disabled   = false;
+    }
+  );
+}
+
+sendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+document.getElementById('clearChatBtn').addEventListener('click', () => {
+  history = [];
+  localStorage.removeItem(STORAGE_KEY);
+  chatMessages.innerHTML = '';
+  appendBubble('assistant',
+    `Hello again! Ask me anything about <strong>${escapeHtml(PATIENT.name)}'s</strong> health results.`);
+});
+
+/* ── Persist chat history per patient ── */
+function saveHistory() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(history)); } catch {}
+}
+
+function loadHistory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (!Array.isArray(saved)) return;
+    history = saved;
+    saved.forEach(m => appendBubble(m.role, m.role === 'user' ? escapeHtml(m.content) : markdownToHtml(m.content)));
+  } catch {}
+}
+
+loadHistory();
+
+/* ── Utilities ── */
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function markdownToHtml(md) {
+  return md
+    .replace(/^## (.+)$/gm, '<strong class="d-block mt-2">$1</strong>')
+    .replace(/^### (.+)$/gm, '<strong class="d-block">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>')
+    .replace(/^- (.+)$/gm, '&bull; $1<br>');
+}
 </script>
 {% endblock %}
